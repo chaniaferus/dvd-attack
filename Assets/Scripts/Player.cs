@@ -1,8 +1,4 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEditor;
 using UnityEngine;
 
 public class Player : MonoBehaviour
@@ -10,7 +6,9 @@ public class Player : MonoBehaviour
     [SerializeField] private Transform groundCheckTransform;
     [SerializeField] private LayerMask playerMask;
     [SerializeField] private List<Color> healthIndicatorColors;
-    
+    [SerializeField] private InputDeviceType inputDeviceType;
+    [SerializeField] private string bouncingBallLayerName;
+
     private int _maxHealth;
     private int _currentHealth;
     private bool _jumpKeyPressed;
@@ -18,6 +16,8 @@ public class Player : MonoBehaviour
     private Rigidbody _playerRigidBody;
     private Renderer _renderer;
     private int _currentColorIndicator;
+
+    private ControlsServiceLocator _controlsServiceLocator;
     
     // Start is called before the first frame update
     void Start()
@@ -26,17 +26,20 @@ public class Player : MonoBehaviour
         _currentHealth = _maxHealth;
         _playerRigidBody = GetComponent<Rigidbody>();
         _renderer = GetComponent<Renderer>();
+        _controlsServiceLocator = GetComponent<ControlsServiceLocator>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        var controlsService = _controlsServiceLocator[inputDeviceType];
+        
+        if (controlsService.JumpButtonDown)
         {
             _jumpKeyPressed = true;
         }
 
-        _horizontalInput = Input.GetAxis("Horizontal");
+        _horizontalInput = controlsService.HorizontalAxis;
     }
 
     private void FixedUpdate()
@@ -59,7 +62,7 @@ public class Player : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.layer != 7)
+        if (collision.gameObject.layer != LayerMask.NameToLayer(bouncingBallLayerName))
         {
             return;
         }
